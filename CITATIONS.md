@@ -1,4 +1,4 @@
-# core-unit-bioinformatics/somatic-sv-calling: Citations
+# core-unit-bioinformatics/somaticsvcalling: Citations
 
 ## [nf-core](https://pubmed.ncbi.nlm.nih.gov/32055031/)
 

@@ -1,4 +1,4 @@
-# core-unit-bioinformatics/somatic-sv-calling: Output
+# core-unit-bioinformatics/somaticsvcalling: Output
 
 ## Introduction
 

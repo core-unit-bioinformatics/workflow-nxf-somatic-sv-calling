@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/core-unit-bioinformatics/somatic-sv-calling/main/nextflow_schema.json",
-    "title": "core-unit-bioinformatics/somatic-sv-calling pipeline parameters",
+    "$id": "https://raw.githubusercontent.com/core-unit-bioinformatics/somaticsvcalling/main/nextflow_schema.json",
+    "title": "core-unit-bioinformatics/somaticsvcalling pipeline parameters",
     "description": "Soamtic structural variant calling for tumor-normal pairs in PacBio HiFi data.",
     "type": "object",
     "$defs": {

@@ -1,9 +1,9 @@
 #!/usr/bin/env nextflow
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    core-unit-bioinformatics/somatic-sv-calling
+    core-unit-bioinformatics/somaticsvcalling
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Github : https://github.com/core-unit-bioinformatics/somatic-sv-calling
+    Github : https://github.com/core-unit-bioinformatics/somaticsvcalling
 ----------------------------------------------------------------------------------------
 */
 
@@ -13,10 +13,10 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { SOMATIC-SV-CALLING  } from './workflows/somatic-sv-calling'
-include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_somatic-sv-calling_pipeline'
-include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_somatic-sv-calling_pipeline'
-include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_somatic-sv-calling_pipeline'
+include { SOMATICSVCALLING  } from './workflows/somaticsvcalling'
+include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_somaticsvcalling_pipeline'
+include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_somaticsvcalling_pipeline'
+include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_somaticsvcalling_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -38,7 +38,7 @@ params.fasta = getGenomeAttribute('fasta')
 //
 // WORKFLOW: Run main analysis pipeline depending on type of input
 //
-workflow COREUNITBIOINFORMATICS_SOMATIC-SV-CALLING {
+workflow COREUNITBIOINFORMATICS_SOMATICSVCALLING {
 
     take:
     samplesheet // channel: samplesheet read in from --input
@@ -48,11 +48,11 @@ workflow COREUNITBIOINFORMATICS_SOMATIC-SV-CALLING {
     //
     // WORKFLOW: Run pipeline
     //
-    SOMATIC-SV-CALLING (
+    SOMATICSVCALLING (
         samplesheet
     )
     emit:
-    multiqc_report = SOMATIC-SV-CALLING.out.multiqc_report // channel: /path/to/multiqc_report.html
+    multiqc_report = SOMATICSVCALLING.out.multiqc_report // channel: /path/to/multiqc_report.html
 }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -78,7 +78,7 @@ workflow {
     //
     // WORKFLOW: Run main workflow
     //
-    COREUNITBIOINFORMATICS_SOMATIC-SV-CALLING (
+    COREUNITBIOINFORMATICS_SOMATICSVCALLING (
         PIPELINE_INITIALISATION.out.samplesheet
     )
     //
@@ -91,7 +91,7 @@ workflow {
         params.outdir,
         params.monochrome_logs,
         params.hook_url,
-        COREUNITBIOINFORMATICS_SOMATIC-SV-CALLING.out.multiqc_report
+        COREUNITBIOINFORMATICS_SOMATICSVCALLING.out.multiqc_report
     )
 }
 

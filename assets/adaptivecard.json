@@ -17,7 +17,7 @@
                         "size": "Large",
                         "weight": "Bolder",
                         "color": "<% if (success) { %>Good<% } else { %>Attention<%} %>",
-                        "text": "core-unit-bioinformatics/somatic-sv-calling v${version} - ${runName}",
+                        "text": "core-unit-bioinformatics/somaticsvcalling v${version} - ${runName}",
                         "wrap": true
                     },
                     {

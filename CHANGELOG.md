@@ -1,11 +1,11 @@
-# core-unit-bioinformatics/somatic-sv-calling: Changelog
+# core-unit-bioinformatics/somaticsvcalling: Changelog
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## v1.0.0dev - [date]
 
-Initial release of core-unit-bioinformatics/somatic-sv-calling, created with the [nf-core](https://nf-co.re/) template.
+Initial release of core-unit-bioinformatics/somaticsvcalling, created with the [nf-core](https://nf-co.re/) template.
 
 ### `Added`
 

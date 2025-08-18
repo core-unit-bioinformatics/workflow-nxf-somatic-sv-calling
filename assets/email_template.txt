@@ -1,10 +1,10 @@
 Run Name: $runName
 
 <% if (success){
-    out << "## core-unit-bioinformatics/somatic-sv-calling execution completed successfully! ##"
+    out << "## core-unit-bioinformatics/somaticsvcalling execution completed successfully! ##"
 } else {
     out << """####################################################
-## core-unit-bioinformatics/somatic-sv-calling execution completed unsuccessfully! ##
+## core-unit-bioinformatics/somaticsvcalling execution completed unsuccessfully! ##
 ####################################################
 The exit status of the task that caused the workflow execution to fail was: $exitStatus.
 The full error message was:
@@ -27,5 +27,5 @@ Pipeline Configuration:
 <% out << summary.collect{ k,v -> " - $k: $v" }.join("\n") %>
 
 --
-core-unit-bioinformatics/somatic-sv-calling
-https://github.com/core-unit-bioinformatics/somatic-sv-calling
+core-unit-bioinformatics/somaticsvcalling
+https://github.com/core-unit-bioinformatics/somaticsvcalling
