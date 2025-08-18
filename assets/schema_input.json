@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/core-unit-bioinformatics/somatic-sv-calling/main/assets/schema_input.json",
-    "title": "core-unit-bioinformatics/somatic-sv-calling pipeline - params.input schema",
+    "$id": "https://raw.githubusercontent.com/core-unit-bioinformatics/somaticsvcalling/main/assets/schema_input.json",
+    "title": "core-unit-bioinformatics/somaticsvcalling pipeline - params.input schema",
     "description": "Schema for the file provided with params.input",
     "type": "array",
     "items": {
@@ -13,21 +13,21 @@
                 "errorMessage": "Sample name must be provided and cannot contain spaces",
                 "meta": ["id"]
             },
-            "fastq_1": {
+            "status": {
                 "type": "string",
-                "format": "file-path",
-                "exists": true,
-                "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.f(ast)?q\\.gz$",
-                "errorMessage": "FastQ file for reads 1 must be provided, cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+                "errorMessage": "Status can only be normal or tumor. Defaults to normal, if none is supplied.",
+                "meta": ["status"],
+                "default": "normal",
+                "enum": ["tumor", "normal"]
             },
-            "fastq_2": {
+            "bam": {
                 "type": "string",
                 "format": "file-path",
                 "exists": true,
-                "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.f(ast)?q\\.gz$",
-                "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+                "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.bam$",
+                "errorMessage": "BAM file for tumor sample must be provided, cannot contain spaces and must have extension '.bam'"
             }
         },
-        "required": ["sample", "fastq_1"]
+        "required": ["sample", "status", "bam"]
     }
 }

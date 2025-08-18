@@ -31,6 +31,17 @@ params.fasta = getGenomeAttribute('fasta')
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    INPUT CHANNELS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+// Initialize files channels from parameters
+
+ch_fasta     = params.fasta    ? Channel.fromPath(params.fasta).collect()  : Channel.empty()
+ch_fasta_ref = ch_fasta.map { ch_fasta -> [[id: ch_fasta.baseName], ch_fasta] } //convert to tuple
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     NAMED WORKFLOWS FOR PIPELINE
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
@@ -42,6 +53,7 @@ workflow COREUNITBIOINFORMATICS_SOMATICSVCALLING {
 
     take:
     samplesheet // channel: samplesheet read in from --input
+    ch_fasta_ref
 
     main:
 
@@ -49,7 +61,8 @@ workflow COREUNITBIOINFORMATICS_SOMATICSVCALLING {
     // WORKFLOW: Run pipeline
     //
     SOMATICSVCALLING (
-        samplesheet
+        samplesheet,
+        ch_fasta_ref
     )
     emit:
     multiqc_report = SOMATICSVCALLING.out.multiqc_report // channel: /path/to/multiqc_report.html
@@ -79,7 +92,8 @@ workflow {
     // WORKFLOW: Run main workflow
     //
     COREUNITBIOINFORMATICS_SOMATICSVCALLING (
-        PIPELINE_INITIALISATION.out.samplesheet
+        PIPELINE_INITIALISATION.out.samplesheet,
+        ch_fasta_ref
     )
     //
     // SUBWORKFLOW: Run completion tasks
