@@ -241,5 +241,11 @@
         {
             "$ref": "#/$defs/generic_options"
         }
-    ]
+    ],
+    "properties": {
+        "align": {
+            "type": "boolean",
+            "default": true
+        }
+    }
 }

@@ -3,13 +3,18 @@
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { PBMM2_INDEX                        } from '../modules/local/pbmm2/index'
-include { PBMM2_ALIGN                        } from '../modules/nf-core/pbmm2/align'
-include { MULTIQC                            } from '../modules/nf-core/multiqc/main'
-include { paramsSummaryMap                   } from 'plugin/nf-schema'
-include { paramsSummaryMultiqc               } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { softwareVersionsToYAML             } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { methodsDescriptionText             } from '../subworkflows/local/utils_nfcore_somaticsvcalling_pipeline'
+//include { PBMM2_INDEX                        } from '../modules/local/pbmm2/index'
+include { PBMM2_ALIGN                            } from '../modules/nf-core/pbmm2/align'
+include { SAMTOOLS_FAIDX                         } from '../modules/nf-core/samtools/faidx/main'
+include { SAMTOOLS_REHEADER as BAMSAMPLERENAME   } from '../modules/nf-core/samtools/reheader/main'
+include { TABIX_TABIX as BAMINDEX                } from '../modules/nf-core/tabix/tabix/main'
+include { DELLY_LR                               } from '../modules/local/delly/lr'
+include { DELLY_FILTER                           } from '../modules/local/delly/filter'
+include { MULTIQC                                } from '../modules/nf-core/multiqc/main'
+include { paramsSummaryMap                       } from 'plugin/nf-schema'
+include { paramsSummaryMultiqc                   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+include { softwareVersionsToYAML                 } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+include { methodsDescriptionText                 } from '../subworkflows/local/utils_nfcore_somaticsvcalling_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -37,11 +42,57 @@ workflow SOMATICSVCALLING {
     //)
     //ch_versions = ch_versions.mix(PBMM2_INDEX.out.versions)
 
-    PBMM2_ALIGN (
-        ch_samplesheet,
-        ch_fasta_ref,
+    // index reference genome
+    SAMTOOLS_FAIDX (
+        ch_fasta_ref
     )
-    ch_versions = ch_versions.mix(PBMM2_ALIGN.out.versions)
+
+    //rename BAM input
+    BAMSAMPLERENAME (
+        ch_samplesheet
+    )
+
+    if (params.align) {
+        PBMM2_ALIGN (
+            BAMSAMPLERENAME.out.bam,
+            ch_fasta_ref,
+        )
+        ch_versions = ch_versions.mix(PBMM2_ALIGN.out.versions)
+
+        ch_aligned_bam = PBMM2_ALIGN.out.bam
+        ch_aligned_csi = PBMM2_ALIGN.out.csi
+    } else {
+        ch_aligned_bam = BAMSAMPLERENAME.out.bam
+        BAMINDEX (
+            ch_aligned_bam
+        )
+        ch_aligned_csi = BAMINDEX.out.csi
+    }
+
+    //format it for delly_lr input; also put together tumor/normal samples as single tuple
+    ch_aligned_bam
+        .join(ch_aligned_csi)
+        .map { meta, bam, csi -> [ meta.id, [meta, bam, csi] ] }
+        .groupTuple() // group by first item, meta.id
+        .map { id, samples ->
+            def metas  = samples.collect{ it[0] }
+            def merged_meta = [ id: metas.id[0] ]
+            def bams   = samples.collect{ it[1] }
+            def csis   = samples.collect{ it[2] }
+            [ merged_meta, bams, csis, [], [], [] ]
+        }
+        .set {ch_bams}
+
+    ch_fasta_fai = ch_fasta_ref
+        .join(SAMTOOLS_FAIDX.out.fai)
+
+    // run delly
+    DELLY_LR (
+        ch_bams,
+        ch_fasta_fai
+    )
+
+    //run delly filter
 
     //
     // Collate and save software versions
