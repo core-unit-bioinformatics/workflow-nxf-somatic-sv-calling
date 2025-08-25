@@ -92,7 +92,11 @@ workflow SOMATICSVCALLING {
         ch_fasta_fai
     )
 
+    delly_filter_input = DELLY_LR.out.bcf
+        .join(DELLY_LR.out.csi)
+    
     //run delly filter
+    DELLY_FILTER(delly_filter_input)
 
     //
     // Collate and save software versions

@@ -1,6 +1,6 @@
 process DELLY_FILTER {
     tag "$meta.id"
-    label 'process_medium'
+    label 'process+medium'
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -8,7 +8,7 @@ process DELLY_FILTER {
         'biocontainers/delly:1.5.0--h4d20210_0' }"
 
     input:
-    tuple val(meta), path(bcf), path(bcf_index), path(samplefile)
+    tuple val(meta), path(bcf), path(bcf_index)
 
     output:
     tuple val(meta), path("*.{bcf,vcf.gz}")  , emit: bcf
@@ -28,8 +28,14 @@ process DELLY_FILTER {
     def vcf_output = suffix == "vcf" ? "| bgzip ${args2} --threads ${task.cpus} --stdout > ${prefix}.vcf.gz && tabix ${prefix}.vcf.gz" : ""
 
     """
+    {
+        echo -e "$prefix-tumor\ttumor"
+        echo -e "$prefix-normal\tcontrol"
+    } > samples.tsv
+
     delly \\
         filter \\
+        --samples samples.tsv \\
         ${args} \\
         ${bcf_output} \\
         ${bcf} \\
