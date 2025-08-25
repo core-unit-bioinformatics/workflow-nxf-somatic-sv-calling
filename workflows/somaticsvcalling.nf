@@ -10,6 +10,8 @@ include { SAMTOOLS_REHEADER as BAMSAMPLERENAME   } from '../modules/nf-core/samt
 include { TABIX_TABIX as BAMINDEX                } from '../modules/nf-core/tabix/tabix/main'
 include { DELLY_LR                               } from '../modules/local/delly/lr'
 include { DELLY_FILTER                           } from '../modules/local/delly/filter'
+include { SNIFFLES as SNIFFLES_MOSAIC            } from '../modules/nf-core/sniffles/main'
+include { SNIFFLES as SNIFFLES_MOSAIC_VCF        } from '../modules/nf-core/sniffles/main'
 include { MULTIQC                                } from '../modules/nf-core/multiqc/main'
 include { paramsSummaryMap                       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc                   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -27,6 +29,7 @@ workflow SOMATICSVCALLING {
     take:
     ch_samplesheet // channel: samplesheet read in from --input
     ch_fasta_ref
+    ch_tandem_repeats_bed
 
     main:
 
@@ -69,9 +72,13 @@ workflow SOMATICSVCALLING {
         ch_aligned_csi = BAMINDEX.out.csi
     }
 
-    //format it for delly_lr input; also put together tumor/normal samples as single tuple
-    ch_aligned_bam
+    //format it for caller input (SNIFFLES)
+
+    ch_bam_csi = ch_aligned_bam
         .join(ch_aligned_csi)
+
+    //also create version with tumor/normal samples in single tuple. (DELLY)
+    ch_bam_csi
         .map { meta, bam, csi -> [ meta.id, [meta, bam, csi] ] }
         .groupTuple() // group by first item, meta.id
         .map { id, samples ->
@@ -81,22 +88,55 @@ workflow SOMATICSVCALLING {
             def csis   = samples.collect{ it[2] }
             [ merged_meta, bams, csis, [], [], [] ]
         }
-        .set {ch_bams}
+        .set {ch_bams_csi_tumornormal}
 
+    // put reference together with fai file for staging.
     ch_fasta_fai = ch_fasta_ref
         .join(SAMTOOLS_FAIDX.out.fai)
 
-    // run delly
-    DELLY_LR (
-        ch_bams,
-        ch_fasta_fai
-    )
 
-    delly_filter_input = DELLY_LR.out.bcf
-        .join(DELLY_LR.out.csi)
+    if (params.delly) {
+        // run delly
+        DELLY_LR (
+            ch_bams_csi_tumornormal,
+            ch_fasta_fai
+        )
+
+        delly_filter_input = DELLY_LR.out.bcf
+            .join(DELLY_LR.out.csi)
     
-    //run delly filter
-    DELLY_FILTER(delly_filter_input)
+        //run delly filter
+        DELLY_FILTER(delly_filter_input)
+    }
+
+    if (params.sniffles) {
+        // RUN sniffles
+        //call candidate SVs in VCF and SNF format
+        SNIFFLES_MOSAIC(
+            ch_bam_csi,
+            ch_fasta_ref,
+            ch_tandem_repeats_bed
+        )
+
+        //merge tumor-normal SNF files for multi-sample calling
+        SNIFFLES_MOSAIC.out.snf
+            .map { meta, snf -> [ meta.id, [meta, snf] ] }
+            .groupTuple() // group by first item, meta.id
+            .map { id, samples ->
+                def metas  = samples.collect{ it[0] }
+                def merged_meta = [ id: metas.id[0], status:"" ]
+                def snfs   = samples.collect{ it[1] }
+                [ merged_meta, snfs, [] ]
+            }
+            .set {ch_snfs_tumornormal}
+
+        // multi-sample calling
+        SNIFFLES_MOSAIC_VCF(
+            ch_snfs_tumornormal,
+            ch_fasta_ref,
+            ch_tandem_repeats_bed
+        )
+    }
 
     //
     // Collate and save software versions

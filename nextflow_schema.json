@@ -246,6 +246,17 @@
         "align": {
             "type": "boolean",
             "default": true
+        },
+        "delly": {
+            "type": "boolean",
+            "default": true
+        },
+        "sniffles": {
+            "type": "boolean",
+            "default": true
+        },
+        "tandem_repeats_bed": {
+            "type": "string"
         }
     }
 }
