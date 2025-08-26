@@ -12,6 +12,8 @@ include { DELLY_LR                               } from '../modules/local/delly/
 include { DELLY_FILTER                           } from '../modules/local/delly/filter'
 include { SNIFFLES as SNIFFLES_MOSAIC            } from '../modules/nf-core/sniffles/main'
 include { SNIFFLES as SNIFFLES_MOSAIC_VCF        } from '../modules/nf-core/sniffles/main'
+include { NANOMONSV_PARSE                        } from '../modules/nf-core/nanomonsv/parse/main'
+include { NANOMONSV_GET                          } from '../modules/local/nanomonsv/get/main'
 include { MULTIQC                                } from '../modules/nf-core/multiqc/main'
 include { paramsSummaryMap                       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc                   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -72,12 +74,11 @@ workflow SOMATICSVCALLING {
         ch_aligned_csi = BAMINDEX.out.csi
     }
 
-    //format it for caller input (SNIFFLES)
-
+    //channel with bam and csi for each sample (SNIFFLES, NANOMONSV)
     ch_bam_csi = ch_aligned_bam
         .join(ch_aligned_csi)
 
-    //also create version with tumor/normal samples in single tuple. (DELLY)
+    //channel of bams with tumor/normal samples in single tuple. (DELLY,NANOMONSV)
     ch_bam_csi
         .map { meta, bam, csi -> [ meta.id, [meta, bam, csi] ] }
         .groupTuple() // group by first item, meta.id
@@ -135,6 +136,35 @@ workflow SOMATICSVCALLING {
             ch_snfs_tumornormal,
             ch_fasta_ref,
             ch_tandem_repeats_bed
+        )
+    }
+
+    if (params.nanomonsv) {
+        NANOMONSV_PARSE(
+            ch_bam_csi,
+            ch_fasta_ref
+        )
+
+        //merge tumor-normal output files for multi-sample calling
+        NANOMONSV_PARSE.out.svs
+            .join(NANOMONSV_PARSE.out.tbis)
+            .join(ch_bam_csi)
+            .map { meta, beds, tbis, bams, csis -> [ meta.id, [meta, beds, tbis, bams, csis] ] }
+            .groupTuple() // group by first item, meta.id
+            .map { id, samples ->
+                def metas  = samples.collect{ it[0] }
+                def merged_meta = [ id: metas.id[0], status:"" ]
+                def beds   = samples.collect{ it[1] }.flatten()
+                def tbis   = samples.collect{ it[2] }.flatten()
+                def bams   = samples.collect{ it[3] }.flatten()
+                def csis   = samples.collect{ it[4] }.flatten()
+                [ merged_meta, beds, tbis, bams, csis ]
+            }
+            .set {ch_nanomonsv_tumornormal}
+
+        NANOMONSV_GET(
+            ch_nanomonsv_tumornormal,
+            ch_fasta_ref    
         )
     }
 
