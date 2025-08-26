@@ -14,6 +14,7 @@ include { SNIFFLES as SNIFFLES_MOSAIC            } from '../modules/nf-core/snif
 include { SNIFFLES as SNIFFLES_MOSAIC_VCF        } from '../modules/nf-core/sniffles/main'
 include { NANOMONSV_PARSE                        } from '../modules/nf-core/nanomonsv/parse/main'
 include { NANOMONSV_GET                          } from '../modules/local/nanomonsv/get/main'
+include { SEVERUS                                } from '../modules/nf-core/severus/main'
 include { MULTIQC                                } from '../modules/nf-core/multiqc/main'
 include { paramsSummaryMap                       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc                   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -32,6 +33,7 @@ workflow SOMATICSVCALLING {
     ch_samplesheet // channel: samplesheet read in from --input
     ch_fasta_ref
     ch_tandem_repeats_bed
+    ch_vntr_bed
 
     main:
 
@@ -78,7 +80,7 @@ workflow SOMATICSVCALLING {
     ch_bam_csi = ch_aligned_bam
         .join(ch_aligned_csi)
 
-    //channel of bams with tumor/normal samples in single tuple. (DELLY,NANOMONSV)
+    //channel of bams with tumor/normal samples in single tuple. (DELLY,NANOMONSV,SEVERUS)
     ch_bam_csi
         .map { meta, bam, csi -> [ meta.id, [meta, bam, csi] ] }
         .groupTuple() // group by first item, meta.id
@@ -87,7 +89,7 @@ workflow SOMATICSVCALLING {
             def merged_meta = [ id: metas.id[0] ]
             def bams   = samples.collect{ it[1] }
             def csis   = samples.collect{ it[2] }
-            [ merged_meta, bams, csis, [], [], [] ]
+            [ merged_meta, bams, csis]
         }
         .set {ch_bams_csi_tumornormal}
 
@@ -97,17 +99,21 @@ workflow SOMATICSVCALLING {
 
 
     if (params.delly) {
+        ch_bams_csi_tumornormal
+            .map { meta, bams, csis -> [ meta, bams, csis, [], [], [] ]}
+            .set {ch_delly_input}
+
         // run delly
         DELLY_LR (
-            ch_bams_csi_tumornormal,
+            ch_delly_input,
             ch_fasta_fai
         )
 
-        delly_filter_input = DELLY_LR.out.bcf
+        ch_delly_filter_input = DELLY_LR.out.bcf
             .join(DELLY_LR.out.csi)
     
         //run delly filter
-        DELLY_FILTER(delly_filter_input)
+        DELLY_FILTER(ch_delly_filter_input)
     }
 
     if (params.sniffles) {
@@ -165,6 +171,17 @@ workflow SOMATICSVCALLING {
         NANOMONSV_GET(
             ch_nanomonsv_tumornormal,
             ch_fasta_ref    
+        )
+    }
+
+    if (params.severus) {
+        ch_bams_csi_tumornormal
+            .map { meta, bams, csis -> [meta, bams, csis, [] ]}
+            .set {ch_severus_input}
+        
+        SEVERUS(
+            ch_severus_input,
+            ch_vntr_bed
         )
     }
 

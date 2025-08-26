@@ -257,6 +257,9 @@
         },
         "tandem_repeats_bed": {
             "type": "string"
+        },
+        "vntr_bed": {
+            "type": "string"
         }
     }
 }

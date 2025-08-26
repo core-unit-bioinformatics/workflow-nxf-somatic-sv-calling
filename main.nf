@@ -41,6 +41,8 @@ ch_fasta              = params.fasta                 ? Channel.fromPath(params.f
 ch_fasta_ref          = ch_fasta.map { ch_fasta -> [[id: ch_fasta.baseName], ch_fasta] } //convert to tuple
 ch_tandem_repeats     = params.tandem_repeats_bed    ? Channel.fromPath(params.tandem_repeats_bed).collect()  : Channel.empty()
 ch_tandem_repeats_bed = ch_tandem_repeats.map { ch_tandem_repeats -> [[id: ch_tandem_repeats.baseName], ch_tandem_repeats] } //convert to tuple
+ch_vntr               = params.vntr_bed    ? Channel.fromPath(params.vntr_bed).collect()  : Channel.empty()
+ch_vntr_bed           = ch_vntr.map { ch_vntr -> [[id: ch_vntr.baseName], ch_vntr] } //convert to tuple
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,6 +59,7 @@ workflow COREUNITBIOINFORMATICS_SOMATICSVCALLING {
     samplesheet // channel: samplesheet read in from --input
     ch_fasta_ref
     ch_tandem_repeats_bed
+    ch_vntr_bed
 
     main:
 
@@ -66,7 +69,8 @@ workflow COREUNITBIOINFORMATICS_SOMATICSVCALLING {
     SOMATICSVCALLING (
         samplesheet,
         ch_fasta_ref,
-        ch_tandem_repeats_bed
+        ch_tandem_repeats_bed,
+        ch_vntr_bed
     )
     emit:
     multiqc_report = SOMATICSVCALLING.out.multiqc_report // channel: /path/to/multiqc_report.html
@@ -98,7 +102,8 @@ workflow {
     COREUNITBIOINFORMATICS_SOMATICSVCALLING (
         PIPELINE_INITIALISATION.out.samplesheet,
         ch_fasta_ref,
-        ch_tandem_repeats_bed
+        ch_tandem_repeats_bed,
+        ch_vntr_bed
     )
     //
     // SUBWORKFLOW: Run completion tasks
