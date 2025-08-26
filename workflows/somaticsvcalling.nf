@@ -4,6 +4,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 //include { PBMM2_INDEX                        } from '../modules/local/pbmm2/index'
+include { SAMTOOLS_MERGE                         } from '../modules/nf-core/samtools/merge/main'
 include { PBMM2_ALIGN                            } from '../modules/nf-core/pbmm2/align'
 include { SAMTOOLS_FAIDX                         } from '../modules/nf-core/samtools/faidx/main'
 include { SAMTOOLS_INDEX as SAMTOOLS_BAI         } from '../modules/nf-core/samtools/index/main'
@@ -46,6 +47,25 @@ workflow SOMATICSVCALLING {
     ch_versions = Channel.empty()
     ch_multiqc_files = Channel.empty()
 
+    // merge bam files from the same sample
+    // group channel based on same entries for sample and status
+    ch_samplesheet
+        .map { meta, bam -> [ [meta.id, meta.status], [meta, bam] ] }
+        .groupTuple()
+        .map { id, samples ->
+            def meta         = samples.collect{ it[0] }[0]
+            def bams         = samples.collect{ it[1] }[0]
+            [ meta, bams ]
+        }
+        .set {ch_samplesheet_merge}
+
+    SAMTOOLS_MERGE (
+        ch_samplesheet_merge,
+        [ null, [] ],
+        [ null, [] ],
+        [ null, [] ]
+    )
+
     //
     // MODULE: Run pbmm2 alignment
     //
@@ -63,7 +83,7 @@ workflow SOMATICSVCALLING {
 
     //rename BAM input
     BAMSAMPLERENAME (
-        ch_samplesheet
+        SAMTOOLS_MERGE.out.bam
     )
     ch_versions = ch_versions.mix(BAMSAMPLERENAME.out.versions)
 
@@ -135,7 +155,7 @@ workflow SOMATICSVCALLING {
             ch_delly_input,
             ch_fasta_fai
         )
-        ch_multiqc_files = ch_multiqc_files.mix(DELLY_CALL.out.bcf.collect{it[1]})
+        ch_multiqc_files = ch_multiqc_files.mix(DELLY_LR.out.bcf.collect{it[1]})
         ch_versions = ch_versions.mix(DELLY_LR.out.versions)
 
         ch_delly_filter_input = DELLY_LR.out.bcf
