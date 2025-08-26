@@ -1,6 +1,6 @@
 process DELLY_FILTER {
     tag "$meta.id"
-    label 'process+medium'
+    label 'process_high'
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
