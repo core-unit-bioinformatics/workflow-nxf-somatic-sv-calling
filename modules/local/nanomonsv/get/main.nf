@@ -33,7 +33,6 @@ process NANOMONSV_GET {
         ln -s ${fasta} genome.fa
     fi
     
-    
     nanomonsv \\
         get \\
         ${args} \\

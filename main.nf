@@ -43,6 +43,10 @@ ch_tandem_repeats     = params.tandem_repeats_bed    ? Channel.fromPath(params.t
 ch_tandem_repeats_bed = ch_tandem_repeats.map { ch_tandem_repeats -> [[id: ch_tandem_repeats.baseName], ch_tandem_repeats] } //convert to tuple
 ch_vntr               = params.vntr_bed    ? Channel.fromPath(params.vntr_bed).collect()  : Channel.empty()
 ch_vntr_bed           = ch_vntr.map { ch_vntr -> [[id: ch_vntr.baseName], ch_vntr] } //convert to tuple
+ch_access             = params.access_bed    ? Channel.fromPath(params.access_bed).collect()  : Channel.empty()
+ch_access_bed         = ch_access.map { ch_access -> [[id: ch_access.baseName], ch_access] } //convert to tuple
+ch_svisionpro         = params.svisionpro_model    ? Channel.fromPath(params.svisionpro_model).collect()  : Channel.empty()
+ch_svisionpro_model   = ch_svisionpro.map { ch_svisionpro -> [[id: ch_svisionpro.baseName], ch_svisionpro] } //convert to tuple
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -60,6 +64,8 @@ workflow COREUNITBIOINFORMATICS_SOMATICSVCALLING {
     ch_fasta_ref
     ch_tandem_repeats_bed
     ch_vntr_bed
+    ch_access_bed
+    ch_svisionpro_model
 
     main:
 
@@ -70,7 +76,9 @@ workflow COREUNITBIOINFORMATICS_SOMATICSVCALLING {
         samplesheet,
         ch_fasta_ref,
         ch_tandem_repeats_bed,
-        ch_vntr_bed
+        ch_vntr_bed,
+        ch_access_bed,
+        ch_svisionpro_model
     )
     emit:
     multiqc_report = SOMATICSVCALLING.out.multiqc_report // channel: /path/to/multiqc_report.html
@@ -103,7 +111,9 @@ workflow {
         PIPELINE_INITIALISATION.out.samplesheet,
         ch_fasta_ref,
         ch_tandem_repeats_bed,
-        ch_vntr_bed
+        ch_vntr_bed,
+        ch_access_bed,
+        ch_svisionpro_model
     )
     //
     // SUBWORKFLOW: Run completion tasks

@@ -260,6 +260,24 @@
         },
         "vntr_bed": {
             "type": "string"
+        },
+        "severus": {
+            "type": "boolean",
+            "default": true
+        },
+        "savana": {
+            "type": "boolean",
+            "default": true
+        },
+        "access_bed": {
+            "type": "string"
+        },
+        "svisionpro_model": {
+            "type": "string"
+        },
+        "svisionpro": {
+            "type": "boolean",
+            "default": true
         }
     }
 }

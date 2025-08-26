@@ -6,8 +6,9 @@
 //include { PBMM2_INDEX                        } from '../modules/local/pbmm2/index'
 include { PBMM2_ALIGN                            } from '../modules/nf-core/pbmm2/align'
 include { SAMTOOLS_FAIDX                         } from '../modules/nf-core/samtools/faidx/main'
+include { SAMTOOLS_INDEX as SAMTOOLS_BAI         } from '../modules/nf-core/samtools/index/main'
+include { SAMTOOLS_INDEX as SAMTOOLS_CSI         } from '../modules/nf-core/samtools/index/main'
 include { SAMTOOLS_REHEADER as BAMSAMPLERENAME   } from '../modules/nf-core/samtools/reheader/main'
-include { TABIX_TABIX as BAMINDEX                } from '../modules/nf-core/tabix/tabix/main'
 include { DELLY_LR                               } from '../modules/local/delly/lr'
 include { DELLY_FILTER                           } from '../modules/local/delly/filter'
 include { SNIFFLES as SNIFFLES_MOSAIC            } from '../modules/nf-core/sniffles/main'
@@ -15,6 +16,8 @@ include { SNIFFLES as SNIFFLES_MOSAIC_VCF        } from '../modules/nf-core/snif
 include { NANOMONSV_PARSE                        } from '../modules/nf-core/nanomonsv/parse/main'
 include { NANOMONSV_GET                          } from '../modules/local/nanomonsv/get/main'
 include { SEVERUS                                } from '../modules/nf-core/severus/main'
+include { SAVANA                                 } from '../modules/local/savana/main'
+include { SVISIONPRO                             } from '../modules/local/svisionpro/main'
 include { MULTIQC                                } from '../modules/nf-core/multiqc/main'
 include { paramsSummaryMap                       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc                   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -34,6 +37,9 @@ workflow SOMATICSVCALLING {
     ch_fasta_ref
     ch_tandem_repeats_bed
     ch_vntr_bed
+    ch_access_bed
+    ch_svisionpro_model
+    
 
     main:
 
@@ -67,31 +73,49 @@ workflow SOMATICSVCALLING {
         ch_versions = ch_versions.mix(PBMM2_ALIGN.out.versions)
 
         ch_aligned_bam = PBMM2_ALIGN.out.bam
-        ch_aligned_csi = PBMM2_ALIGN.out.csi
     } else {
         ch_aligned_bam = BAMSAMPLERENAME.out.bam
-        BAMINDEX (
-            ch_aligned_bam
-        )
-        ch_aligned_csi = BAMINDEX.out.csi
     }
 
-    //channel with bam and csi for each sample (SNIFFLES, NANOMONSV)
-    ch_bam_csi = ch_aligned_bam
-        .join(ch_aligned_csi)
+    // indexing for downstream processes
+    SAMTOOLS_BAI (
+        ch_aligned_bam
+    )
+    SAMTOOLS_CSI (
+        ch_aligned_bam
+    )
 
-    //channel of bams with tumor/normal samples in single tuple. (DELLY,NANOMONSV,SEVERUS)
+    //channel with bam and indeces for each sample (SNIFFLES, NANOMONSV)
+    ch_bam_csi = ch_aligned_bam
+        .join(SAMTOOLS_CSI.out.csi)
+
     ch_bam_csi
-        .map { meta, bam, csi -> [ meta.id, [meta, bam, csi] ] }
+        .map { meta, bam, index -> [ meta.id, [meta, bam, index] ] }
         .groupTuple() // group by first item, meta.id
         .map { id, samples ->
-            def metas  = samples.collect{ it[0] }
-            def merged_meta = [ id: metas.id[0] ]
-            def bams   = samples.collect{ it[1] }
-            def csis   = samples.collect{ it[2] }
-            [ merged_meta, bams, csis]
+            def metas        = samples.collect{ it[0] }
+            def merged_meta  = [ id: metas.id[0] ]
+            def bams         = samples.collect{ it[1] }
+            def index        = samples.collect{ it[2] }
+            [ merged_meta, bams, index]
         }
         .set {ch_bams_csi_tumornormal}
+
+    ch_bam_bai = ch_aligned_bam
+        .join(SAMTOOLS_BAI.out.bai)
+
+    //channel of bams with tumor/normal samples in single tuple. (DELLY,NANOMONSV,SEVERUS)
+    ch_bam_bai
+        .map { meta, bam, index -> [ meta.id, [meta, bam, index] ] }
+        .groupTuple() // group by first item, meta.id
+        .map { id, samples ->
+            def metas        = samples.collect{ it[0] }
+            def merged_meta  = [ id: metas.id[0] ]
+            def bams         = samples.collect{ it[1] }
+            def index        = samples.collect{ it[2] }
+            [ merged_meta, bams, index]
+        }
+        .set {ch_bams_bai_tumornormal}
 
     // put reference together with fai file for staging.
     ch_fasta_fai = ch_fasta_ref
@@ -100,7 +124,7 @@ workflow SOMATICSVCALLING {
 
     if (params.delly) {
         ch_bams_csi_tumornormal
-            .map { meta, bams, csis -> [ meta, bams, csis, [], [], [] ]}
+            .map { meta, bams, index -> [ meta, bams, index, [], [], [] ]}
             .set {ch_delly_input}
 
         // run delly
@@ -155,7 +179,7 @@ workflow SOMATICSVCALLING {
         NANOMONSV_PARSE.out.svs
             .join(NANOMONSV_PARSE.out.tbis)
             .join(ch_bam_csi)
-            .map { meta, beds, tbis, bams, csis -> [ meta.id, [meta, beds, tbis, bams, csis] ] }
+            .map { meta, beds, tbis, bams, index -> [ meta.id, [meta, beds, tbis, bams, index] ] }
             .groupTuple() // group by first item, meta.id
             .map { id, samples ->
                 def metas  = samples.collect{ it[0] }
@@ -163,8 +187,8 @@ workflow SOMATICSVCALLING {
                 def beds   = samples.collect{ it[1] }.flatten()
                 def tbis   = samples.collect{ it[2] }.flatten()
                 def bams   = samples.collect{ it[3] }.flatten()
-                def csis   = samples.collect{ it[4] }.flatten()
-                [ merged_meta, beds, tbis, bams, csis ]
+                def index   = samples.collect{ it[4] }.flatten()
+                [ merged_meta, beds, tbis, bams, index ]
             }
             .set {ch_nanomonsv_tumornormal}
 
@@ -176,12 +200,32 @@ workflow SOMATICSVCALLING {
 
     if (params.severus) {
         ch_bams_csi_tumornormal
-            .map { meta, bams, csis -> [meta, bams, csis, [] ]}
+            .map { meta, bams, index -> [meta, bams, index, [] ]}
             .set {ch_severus_input}
-        
+
         SEVERUS(
             ch_severus_input,
             ch_vntr_bed
+        )
+    }
+
+    if (params.savana) {        
+        SAVANA(
+            ch_bams_csi_tumornormal,
+            ch_fasta_fai
+        )
+    }
+
+    if (params.svisionpro) {        
+        // put reference together with gzi file for svisionpro
+        ch_fasta_gzi = ch_fasta_ref
+            .join(SAMTOOLS_FAIDX.out.gzi)
+        
+        SVISIONPRO(
+            ch_bams_bai_tumornormal,
+            ch_fasta_gzi,
+            ch_access_bed,
+            ch_svisionpro_model
         )
     }
 
