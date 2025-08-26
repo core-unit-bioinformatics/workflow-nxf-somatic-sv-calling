@@ -59,11 +59,13 @@ workflow SOMATICSVCALLING {
     SAMTOOLS_FAIDX (
         ch_fasta_ref
     )
+    ch_versions = ch_versions.mix(SAMTOOLS_FAIDX.out.versions)
 
     //rename BAM input
     BAMSAMPLERENAME (
         ch_samplesheet
     )
+    ch_versions = ch_versions.mix(BAMSAMPLERENAME.out.versions)
 
     if (params.align) {
         PBMM2_ALIGN (
@@ -84,6 +86,7 @@ workflow SOMATICSVCALLING {
     SAMTOOLS_CSI (
         ch_aligned_bam
     )
+    ch_versions = ch_versions.mix(SAMTOOLS_CSI.out.versions)
 
     //channel with bam and indeces for each sample (SNIFFLES, NANOMONSV)
     ch_bam_csi = ch_aligned_bam
@@ -132,12 +135,16 @@ workflow SOMATICSVCALLING {
             ch_delly_input,
             ch_fasta_fai
         )
+        ch_multiqc_files = ch_multiqc_files.mix(DELLY_CALL.out.bcf.collect{it[1]})
+        ch_versions = ch_versions.mix(DELLY_LR.out.versions)
 
         ch_delly_filter_input = DELLY_LR.out.bcf
             .join(DELLY_LR.out.csi)
     
         //run delly filter
         DELLY_FILTER(ch_delly_filter_input)
+        ch_multiqc_files = ch_multiqc_files.mix(DELLY_FILTER.out.bcf.collect{it[1]})
+        ch_versions = ch_versions.mix(DELLY_FILTER.out.versions)
     }
 
     if (params.sniffles) {
@@ -148,6 +155,7 @@ workflow SOMATICSVCALLING {
             ch_fasta_ref,
             ch_tandem_repeats_bed
         )
+        ch_versions = ch_versions.mix(SNIFFLES_MOSAIC.out.versions)
 
         //merge tumor-normal SNF files for multi-sample calling
         SNIFFLES_MOSAIC.out.snf
@@ -167,6 +175,8 @@ workflow SOMATICSVCALLING {
             ch_fasta_ref,
             ch_tandem_repeats_bed
         )
+        ch_multiqc_files = ch_multiqc_files.mix(SNIFFLES_MOSAIC_VCF.out.vcf.collect{it[1]})
+        ch_versions = ch_versions.mix(SNIFFLES_MOSAIC_VCF.out.versions)
     }
 
     if (params.nanomonsv) {
@@ -174,6 +184,7 @@ workflow SOMATICSVCALLING {
             ch_bam_csi,
             ch_fasta_ref
         )
+        ch_versions = ch_versions.mix(NANOMONSV_PARSE.out.versions)
 
         //merge tumor-normal output files for multi-sample calling
         NANOMONSV_PARSE.out.svs
@@ -196,6 +207,7 @@ workflow SOMATICSVCALLING {
             ch_nanomonsv_tumornormal,
             ch_fasta_ref    
         )
+        ch_versions = ch_versions.mix(NANOMONSV_GET.out.versions)
     }
 
     if (params.severus) {
@@ -207,6 +219,10 @@ workflow SOMATICSVCALLING {
             ch_severus_input,
             ch_vntr_bed
         )
+        ch_multiqc_files = ch_multiqc_files.mix(SEVERUS.out.all_vcf.collect{it[1]})
+        ch_multiqc_files = ch_multiqc_files.mix(SEVERUS.out.somatic_vcf.collect{it[1]})
+        ch_versions = ch_versions.mix(SEVERUS.out.versions)
+
     }
 
     if (params.savana) {        
@@ -214,6 +230,9 @@ workflow SOMATICSVCALLING {
             ch_bams_csi_tumornormal,
             ch_fasta_fai
         )
+        ch_multiqc_files = ch_multiqc_files.mix(SEVERUS.out.all_vcf.collect{it[1]})
+        ch_multiqc_files = ch_multiqc_files.mix(SEVERUS.out.somatic_vcf.collect{it[1]})
+        ch_versions = ch_versions.mix(SEVERUS.out.versions)
     }
 
     if (params.svisionpro) {        
