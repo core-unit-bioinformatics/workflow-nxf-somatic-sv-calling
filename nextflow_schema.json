@@ -278,6 +278,10 @@
         "svisionpro": {
             "type": "boolean",
             "default": true
+        },
+        "nanomonsv": {
+            "type": "boolean",
+            "default": true
         }
     }
 }
