@@ -12,8 +12,8 @@ process SAVANA {
     tuple val(meta2), path(fasta), path(fai)
 
     output:
-    tuple val(meta), path("${prefix}/somatic_SVs/plots/severus_*.html")         , emit: somatic_plots                    , optional: true
-    path "versions.yml"                                                         , emit: versions
+    tuple val(meta), path("${prefix}/*") , emit: out
+    path "versions.yml"                  , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
