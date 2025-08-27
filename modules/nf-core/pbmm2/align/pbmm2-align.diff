@@ -1,24 +1,8 @@
 Changes in component 'nf-core/pbmm2/align'
-Changes in 'pbmm2/align/environment.yml':
---- modules/nf-core/pbmm2/align/environment.yml
-+++ modules/nf-core/pbmm2/align/environment.yml
-@@ -4,4 +4,4 @@
-   - conda-forge
-   - bioconda
- dependencies:
--  - bioconda::pbmm2=1.14.99
-+  - bioconda::pbmm2=1.17.0
-
-'modules/nf-core/pbmm2/align/meta.yml' is unchanged
 Changes in 'pbmm2/align/main.nf':
 --- modules/nf-core/pbmm2/align/main.nf
 +++ modules/nf-core/pbmm2/align/main.nf
-@@ -1,27 +1,28 @@
- process PBMM2_ALIGN {
-     tag "$meta.id"
--    label 'process_high'
-+    label 'process_medium'
- 
+@@ -5,30 +5,31 @@
  
      conda "${moduleDir}/environment.yml"
      container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -48,7 +32,26 @@ Changes in 'pbmm2/align/main.nf':
      """
      pbmm2 \\
          align \\
+         $args \\
+         $fasta \\
+         $bam \\
+-        ${prefix}.bam \\
++        ${prefix}-aligned.bam \\
+         --num-threads ${task.cpus}
+ 
+     cat <<-END_VERSIONS > versions.yml
 
-'modules/nf-core/pbmm2/align/tests/main.nf.test' is unchanged
+Changes in 'pbmm2/align/environment.yml':
+--- modules/nf-core/pbmm2/align/environment.yml
++++ modules/nf-core/pbmm2/align/environment.yml
+@@ -4,4 +4,4 @@
+   - conda-forge
+   - bioconda
+ dependencies:
+-  - bioconda::pbmm2=1.14.99
++  - bioconda::pbmm2=1.17.0
+
+'modules/nf-core/pbmm2/align/meta.yml' is unchanged
 'modules/nf-core/pbmm2/align/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/pbmm2/align/tests/main.nf.test' is unchanged
 ************************************************************

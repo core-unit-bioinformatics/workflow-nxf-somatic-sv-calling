@@ -29,7 +29,7 @@ process PBMM2_ALIGN {
         $args \\
         $fasta \\
         $bam \\
-        ${prefix}.bam \\
+        ${prefix}-aligned.bam \\
         --num-threads ${task.cpus}
 
     cat <<-END_VERSIONS > versions.yml
