@@ -2,7 +2,7 @@ Changes in component 'nf-core/pbmm2/align'
 Changes in 'pbmm2/align/main.nf':
 --- modules/nf-core/pbmm2/align/main.nf
 +++ modules/nf-core/pbmm2/align/main.nf
-@@ -5,30 +5,31 @@
+@@ -5,30 +5,33 @@
  
      conda "${moduleDir}/environment.yml"
      container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -30,6 +30,8 @@ Changes in 'pbmm2/align/main.nf':
 -    def prefix = task.ext.prefix ?: "${meta.id}"
 +    def prefix = task.ext.prefix ?: "${meta.id + "-" + meta.status}"
      """
++    TMPDIR=\$PWD
++    
      pbmm2 \\
          align \\
          $args \\

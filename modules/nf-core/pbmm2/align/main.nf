@@ -24,6 +24,8 @@ process PBMM2_ALIGN {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id + "-" + meta.status}"
     """
+    TMPDIR=\$PWD
+    
     pbmm2 \\
         align \\
         $args \\
