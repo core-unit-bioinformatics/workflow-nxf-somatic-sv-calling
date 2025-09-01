@@ -19,7 +19,7 @@ process SAMTOOLS_REHEADER {
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}-${meta.status}"
+    def prefix = task.ext.prefix ?: "${meta.id}-reheader"
 
     if ("$bam" == "${prefix}.bam") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """

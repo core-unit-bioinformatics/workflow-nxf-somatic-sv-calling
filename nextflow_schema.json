@@ -243,10 +243,6 @@
         }
     ],
     "properties": {
-        "align": {
-            "type": "boolean",
-            "default": true
-        },
         "delly": {
             "type": "boolean",
             "default": true

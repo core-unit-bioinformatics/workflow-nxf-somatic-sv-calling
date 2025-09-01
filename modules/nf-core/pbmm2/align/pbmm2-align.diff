@@ -2,7 +2,7 @@ Changes in component 'nf-core/pbmm2/align'
 Changes in 'pbmm2/align/main.nf':
 --- modules/nf-core/pbmm2/align/main.nf
 +++ modules/nf-core/pbmm2/align/main.nf
-@@ -5,30 +5,33 @@
+@@ -5,24 +5,27 @@
  
      conda "${moduleDir}/environment.yml"
      container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -35,13 +35,6 @@ Changes in 'pbmm2/align/main.nf':
      pbmm2 \\
          align \\
          $args \\
-         $fasta \\
-         $bam \\
--        ${prefix}.bam \\
-+        ${prefix}-aligned.bam \\
-         --num-threads ${task.cpus}
- 
-     cat <<-END_VERSIONS > versions.yml
 
 Changes in 'pbmm2/align/environment.yml':
 --- modules/nf-core/pbmm2/align/environment.yml

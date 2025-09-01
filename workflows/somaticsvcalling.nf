@@ -87,17 +87,12 @@ workflow SOMATICSVCALLING {
     )
     ch_versions = ch_versions.mix(BAMSAMPLERENAME.out.versions)
 
-    if (params.align) {
-        PBMM2_ALIGN (
-            BAMSAMPLERENAME.out.bam,
-            ch_fasta_ref,
-        )
-        ch_versions = ch_versions.mix(PBMM2_ALIGN.out.versions)
-
-        ch_aligned_bam = PBMM2_ALIGN.out.bam
-    } else {
-        ch_aligned_bam = BAMSAMPLERENAME.out.bam
-    }
+    PBMM2_ALIGN (
+        BAMSAMPLERENAME.out.bam,
+        ch_fasta_ref,
+    )
+    ch_versions = ch_versions.mix(PBMM2_ALIGN.out.versions)
+    ch_aligned_bam = PBMM2_ALIGN.out.bam
 
     // indexing for downstream processes
     SAMTOOLS_BAI (
