@@ -39,8 +39,6 @@ process NANOMONSV_GET {
         --control_prefix ${normal_prefix} \\
         --control_bam ${normal_bam} \\
         --processes ${task.cpus} \\
-        --max_memory_minimap2 ${task.memory.toGiga()} \\
-        --sort_option '-S ${task.memory.toGiga()}G' \\
         ${tumor_prefix} \\
         ${tumor_bam} \\
         genome.fa
