@@ -24,8 +24,8 @@ process DELLY_FILTER {
     def prefix = task.ext.prefix ?: "${meta.id}"
     def suffix = task.ext.suffix ?: "bcf"
 
-    def bcf_output = suffix == "bcf" ? "--outfile ${prefix}.bcf" : ""
-    def vcf_output = suffix == "vcf" ? "| bgzip ${args2} --threads ${task.cpus} --stdout > ${prefix}.vcf.gz && tabix ${prefix}.vcf.gz" : ""
+    def bcf_output = suffix == "bcf" ? "--outfile ${prefix}-filtered.bcf" : ""
+    def vcf_output = suffix == "vcf" ? "| bgzip ${args2} --threads ${task.cpus} --stdout > ${prefix}-filtered.vcf.gz && tabix ${prefix}-filtered.vcf.gz" : ""
 
     """
     {
