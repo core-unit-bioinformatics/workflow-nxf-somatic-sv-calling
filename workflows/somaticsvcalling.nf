@@ -137,8 +137,7 @@ workflow SOMATICSVCALLING {
 
     // put reference together with fai file for staging.
     ch_fasta_fai = ch_fasta_ref
-        .join(SAMTOOLS_FAIDX.out.fai)
-
+        .map { meta, fasta -> [meta, fasta, SAMTOOLS_FAIDX.out.fai] }
 
     if (params.delly) {
         ch_bams_csi_tumornormal
