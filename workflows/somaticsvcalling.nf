@@ -103,10 +103,10 @@ workflow SOMATICSVCALLING {
     )
     ch_versions = ch_versions.mix(SAMTOOLS_CSI.out.versions)
 
-    //channel with bam and indeces for each sample (SNIFFLES, NANOMONSV)
+    //channel with bam and CSI index (SEVERUS, DELLY, SAVANA)
     ch_bam_csi = ch_aligned_bam
         .join(SAMTOOLS_CSI.out.csi)
-
+    
     ch_bam_csi
         .map { meta, bam, index -> [ meta.id, [meta, bam, index] ] }
         .groupTuple() // group by first item, meta.id
@@ -119,10 +119,10 @@ workflow SOMATICSVCALLING {
         }
         .set {ch_bams_csi_tumornormal}
 
+    //channel with bam and BAI index (SVISIONPRO)
     ch_bam_bai = ch_aligned_bam
         .join(SAMTOOLS_BAI.out.bai)
-
-    //channel of bams with tumor/normal samples in single tuple. (DELLY,NANOMONSV,SEVERUS)
+    
     ch_bam_bai
         .map { meta, bam, index -> [ meta.id, [meta, bam, index] ] }
         .groupTuple() // group by first item, meta.id
@@ -245,9 +245,9 @@ workflow SOMATICSVCALLING {
             ch_bams_csi_tumornormal,
             ch_fasta_fai
         )
-        ch_multiqc_files = ch_multiqc_files.mix(SEVERUS.out.all_vcf.collect{it[1]})
-        ch_multiqc_files = ch_multiqc_files.mix(SEVERUS.out.somatic_vcf.collect{it[1]})
-        ch_versions = ch_versions.mix(SEVERUS.out.versions)
+        ch_multiqc_files = ch_multiqc_files.mix(SAVANA.out.all_vcf.collect{it[1]})
+        ch_multiqc_files = ch_multiqc_files.mix(SAVANA.out.somatic_vcf.collect{it[1]})
+        ch_versions = ch_versions.mix(SAVANA.out.versions)
     }
 
     if (params.svisionpro) {        
