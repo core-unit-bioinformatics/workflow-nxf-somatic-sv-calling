@@ -244,7 +244,7 @@ workflow SOMATICSVCALLING {
             ch_bams_csi_tumornormal,
             ch_fasta_fai
         )
-        ch_multiqc_files = ch_multiqc_files.mix(SAVANA.out.out.collect{it[1]})
+        ch_multiqc_files = ch_multiqc_files.mix(SAVANA.out.collect{it[1]})
         ch_versions = ch_versions.mix(SAVANA.out.versions)
     }
 
