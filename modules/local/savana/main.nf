@@ -12,7 +12,7 @@ process SAVANA {
     tuple val(meta2), path(fasta), path(fai)
 
     output:
-    tuple val(meta), path("${prefix}/*") , emit: out
+    tuple val(meta), path("${prefix}/*") , emit: output
     path "versions.yml"                  , emit: versions
 
     when:
